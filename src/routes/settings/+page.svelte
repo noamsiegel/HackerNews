@@ -19,10 +19,12 @@
   let currentPrompt = "";
 
   onMount(async () => {
-    settings.openAiApiKey = await invoke("get_openai_api_key");
-    settings.jinaAiApiKey = await invoke("get_jina_api_key");
-    currentPrompt = await fetchCurrentPrompt();
-    settings.selectedPrompt = currentPrompt;
+    const savedSettings = localStorage.getItem("settings");
+    if (savedSettings) {
+      settings = JSON.parse(savedSettings);
+    }
+    settings.selectedPrompt = await fetchCurrentPrompt();
+    settings.openAiApiKey = await get_openai_api_key();
   });
 
   function goBack() {
@@ -30,6 +32,7 @@
   }
 
   async function saveSettings() {
+    localStorage.setItem("settings", JSON.stringify(settings));
     try {
       await invoke("update_selected_prompt", {
         prompt: settings.selectedPrompt,
@@ -37,14 +40,10 @@
       await invoke("update_openai_api_key", {
         key: settings.openAiApiKey,
       });
-      await invoke("update_jina_api_key", {
-        key: settings.jinaAiApiKey,
-      });
-      currentPrompt = await fetchCurrentPrompt();
       showBanner = true;
-      bannerMessage = `Settings saved. Current prompt: ${currentPrompt}`;
+      bannerMessage = `Settings saved`;
     } catch (error) {
-      console.error("Error saving settings:", error);
+      console.error("Error updating selected prompt:", error);
       showBanner = true;
       bannerMessage = "Error saving settings. Please try again.";
     }
@@ -56,6 +55,11 @@
   async function fetchCurrentPrompt() {
     const prompt = await invoke("get_selected_prompt");
     return prompt as string;
+  }
+
+  async function get_openai_api_key() {
+    const openai_key = await invoke("get_openai_api_key");
+    return openai_key as string;
   }
 </script>
 
@@ -91,8 +95,6 @@
       {/each}
     </select>
   </label>
-
-  <p>Current Prompt: {currentPrompt}</p>
 
   {#if showBanner}
     <div class="banner">{bannerMessage}</div>
