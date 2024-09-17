@@ -62,7 +62,6 @@
 </nav>
 
 <div class="settings-container">
-  <h2>Application Settings</h2>
   <label>
     Open AI API Key:
     <input
