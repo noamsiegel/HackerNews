@@ -13,12 +13,13 @@ mod state;
 use crate::apis::hacker_news::{fetch_story, fetch_top_stories};
 use crate::apis::jina_ai::scrape_url;
 use crate::apis::summaries::summarize_story;
+use crate::state::{JinaAIKey, OpenAIKey, SelectedPrompt};
 use std::fs;
 use std::sync::Mutex;
 use tauri::Manager;
 
 // Add this struct to store the selected prompt
-struct SelectedPrompt(Mutex<String>);
+// struct SelectedPrompt(Mutex<String>);
 
 fn main() {
     tauri::Builder::default()
