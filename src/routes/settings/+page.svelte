@@ -19,10 +19,8 @@
   let currentPrompt = "";
 
   onMount(async () => {
-    const savedSettings = localStorage.getItem("settings");
-    if (savedSettings) {
-      settings = JSON.parse(savedSettings);
-    }
+    settings.openAiApiKey = await invoke("get_openai_api_key");
+    settings.jinaAiApiKey = await invoke("get_jina_api_key");
     currentPrompt = await fetchCurrentPrompt();
     settings.selectedPrompt = currentPrompt;
   });
@@ -32,16 +30,21 @@
   }
 
   async function saveSettings() {
-    localStorage.setItem("settings", JSON.stringify(settings));
     try {
       await invoke("update_selected_prompt", {
         prompt: settings.selectedPrompt,
+      });
+      await invoke("update_openai_api_key", {
+        key: settings.openAiApiKey,
+      });
+      await invoke("update_jina_api_key", {
+        key: settings.jinaAiApiKey,
       });
       currentPrompt = await fetchCurrentPrompt();
       showBanner = true;
       bannerMessage = `Settings saved. Current prompt: ${currentPrompt}`;
     } catch (error) {
-      console.error("Error updating selected prompt:", error);
+      console.error("Error saving settings:", error);
       showBanner = true;
       bannerMessage = "Error saving settings. Please try again.";
     }
