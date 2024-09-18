@@ -1,7 +1,7 @@
 use super::jina_ai::scrape_url;
 use super::oa_client::create_client;
 use crate::prompts::{PODCASTER_SYSTEM_PROMPT, SUMMARY_SYSTEM_PROMPT};
-use crate::state::{get_openai_api_key, OpenAIKey, SelectedPrompt};
+use crate::state::{get_openai_api_key, OpenAIKey, SelectedModel, SelectedPrompt};
 use async_openai::types::{
     ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
     ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs,
@@ -13,6 +13,7 @@ pub async fn summarize_story(
     url: &str,
     selected_prompt_state: tauri::State<'_, SelectedPrompt>,
     openai_key_state: tauri::State<'_, OpenAIKey>,
+    selected_model_state: tauri::State<'_, SelectedModel>,
 ) -> Result<String, String> {
     // Extract values from the MutexGuards before entering async context
     let selected_prompt = selected_prompt_state
@@ -21,6 +22,13 @@ pub async fn summarize_story(
         .map_err(|e| e.to_string())?
         .clone();
     let openai_key = get_openai_api_key(openai_key_state);
+    let selected_model = selected_model_state
+        .0
+        .lock()
+        .map_err(|e| e.to_string())?
+        .clone();
+
+    println!("Selected LLM model: {}", selected_model);
 
     let system_prompt = match selected_prompt.as_str() {
         "SUMMARY_SYSTEM_PROMPT" => SUMMARY_SYSTEM_PROMPT,
@@ -32,7 +40,7 @@ pub async fn summarize_story(
     let client = create_client(&openai_key);
 
     let request = CreateChatCompletionRequestArgs::default()
-        .model("gpt-4o-mini")
+        .model(&selected_model)
         .messages([
             ChatCompletionRequestMessage::System(
                 ChatCompletionRequestSystemMessageArgs::default()
