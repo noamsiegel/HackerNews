@@ -4,6 +4,7 @@ use tauri::Manager;
 pub struct SelectedPrompt(pub Mutex<String>);
 pub struct OpenAIKey(pub Mutex<String>);
 pub struct JinaAIKey(pub Mutex<String>);
+pub struct SelectedModel(pub Mutex<String>);
 
 #[tauri::command]
 pub fn update_openai_api_key(
@@ -23,7 +24,7 @@ pub fn get_openai_api_key(state: tauri::State<'_, OpenAIKey>) -> String {
     openai_key.clone()
 }
 
-pub fn load_api_key(
+pub fn get_api_key(
     app_handle: tauri::AppHandle,
     key_name: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
@@ -77,4 +78,27 @@ pub fn update_settings(app: &tauri::AppHandle, key: &str, value: &str) -> Result
     )
     .map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[tauri::command]
+pub fn update_selected_model(
+    model: String,
+    state: tauri::State<'_, SelectedModel>,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let mut selected_model = state.0.lock().unwrap();
+    *selected_model = model.clone();
+
+    update_settings(&app, "selectedModel", &model)
+}
+
+// #[tauri::command]
+// pub fn get_selected_model(state: tauri::State<'_, SelectedModel>) -> String {
+//     let selected_model = state.0.lock().unwrap();
+//     selected_model.clone()
+// }
+
+#[tauri::command]
+pub fn get_selected_model(app_handle: tauri::AppHandle) -> Result<String, String> {
+    get_api_key(app_handle, "selectedModel").map_err(|e| e.to_string())
 }
