@@ -26,7 +26,7 @@
 <!-- Navbar -->
 <nav class="navbar">
   <h1>Hacker News</h1>
-  <button class="settings-icon" on:click={() => goto('/settings')}>⚙️</button>
+  <button class="settings-icon" on:click={() => goto("/settings")}>⚙️</button>
 </nav>
 
 <div class="story-list">

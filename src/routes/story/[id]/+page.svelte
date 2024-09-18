@@ -24,7 +24,7 @@
   });
 
   function goBack() {
-    goto("/");
+    history.back();
   }
 
   async function showContent() {
@@ -57,7 +57,10 @@
 </script>
 
 <div class="story-details">
-  <button on:click={goBack}>Back to Home</button>
+  <div class="navbar">
+    <button on:click={goBack}>Back to Home</button>
+    <button class="settings-icon" on:click={() => goto("/settings")}>⚙️</button>
+  </div>
 
   {#if loading}
     <p>Loading...</p>
@@ -150,5 +153,20 @@
     font-size: 85%;
     background-color: rgba(27, 31, 35, 0.05);
     border-radius: 6px;
+  }
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    /* background-color: #f8f8f8; */
+    border-bottom: 1px solid #ccc;
+  }
+
+  .settings-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
   }
 </style>

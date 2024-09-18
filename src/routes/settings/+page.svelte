@@ -2,17 +2,25 @@
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import { page } from "$app/stores";
+
+  function goBack() {
+    history.back();
+  }
 
   let settings = {
     openAiApiKey: "",
     jinaAiApiKey: "",
     selectedPrompt: "SUMMARY_SYSTEM_PROMPT",
+    selectedModel: "gpt-4o",
   };
 
   const prompts = [
     { value: "SUMMARY_SYSTEM_PROMPT", label: "Summary System Prompt" },
     { value: "PODCASTER_SYSTEM_PROMPT", label: "Podcaster System Prompt" },
   ];
+
+  let models: { [key: string]: string } = {};
 
   let showBanner = false;
   let bannerMessage = "";
@@ -25,11 +33,9 @@
     }
     settings.selectedPrompt = await fetchCurrentPrompt();
     settings.openAiApiKey = await get_openai_api_key();
+    models = await invoke("get_llm_models");
+    settings.selectedModel = await fetchCurrentModel();
   });
-
-  function goBack() {
-    goto("/");
-  }
 
   async function saveSettings() {
     localStorage.setItem("settings", JSON.stringify(settings));
@@ -39,6 +45,9 @@
       });
       await invoke("update_openai_api_key", {
         key: settings.openAiApiKey,
+      });
+      await invoke("update_selected_model", {
+        model: settings.selectedModel,
       });
       showBanner = true;
       bannerMessage = `Settings saved`;
@@ -60,6 +69,11 @@
   async function get_openai_api_key() {
     const openai_key = await invoke("get_openai_api_key");
     return openai_key as string;
+  }
+
+  async function fetchCurrentModel() {
+    const model = await invoke("get_selected_model");
+    return model as string;
   }
 </script>
 
@@ -91,6 +105,15 @@
     <select bind:value={settings.selectedPrompt} on:change={saveSettings}>
       {#each prompts as prompt}
         <option value={prompt.value}>{prompt.label}</option>
+      {/each}
+    </select>
+  </label>
+
+  <label>
+    Select Model:
+    <select bind:value={settings.selectedModel} on:change={saveSettings}>
+      {#each Object.entries(models) as [value, label]}
+        <option {value}>{label}</option>
       {/each}
     </select>
   </label>
