@@ -2,8 +2,18 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { goto } from "$app/navigation";
+  import Settings from "./settings/+page.svelte";
+  import * as Sheet from "$lib/components/ui/sheet";
+  import { settingsOpen } from "$lib/stores/settingsStore";
+  import * as Card from "$lib/components/ui/card";
+  import { Button } from "$lib/components/ui/button";
+  import { Skeleton } from "$lib/components/ui/skeleton";
+  import { Badge } from "$lib/components/ui/badge";
+  import * as Menubar from "$lib/components/ui/menubar";
+  import { Settings as SettingsIcon } from "lucide-svelte";
 
   let stories: { id: number; title: string; score: number }[] = [];
+  let loading = true;
 
   onMount(async () => {
     try {
