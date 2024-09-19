@@ -9,13 +9,15 @@ edition = "2021"
 
 [lib]
 name = "hacker_news_lib"
-crate-type = ["lib", "cdylib", "staticlib"]
+# crate-type = ["lib", "cdylib", "staticlib"]
+crate-type = ["staticlib", "cdylib", "rlib"]
+
 
 [build-dependencies]
 tauri-build = { version = "2.0.0-rc", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.0-rc", features = [] }
+tauri = { version = "2.0.0-rc", features = ["rustls-tls"] }
 tauri-plugin-shell = "2.0.0-rc"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -27,4 +29,5 @@ tokio = { version = "1.40.0", features = ["full"] }
 derive_more = { version = "1.0.0", features = ["full"] }
 rpc-router = "0.1.3"
 dotenv = "0.15.0"
+rustls = "=0.23.13"
 # kalosm = { git = "https://github.com/floneum/floneum", version = "0.3.2", features = ["full"] }

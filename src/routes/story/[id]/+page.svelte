@@ -2,8 +2,15 @@
   import { onMount } from "svelte";
   import { page } from "$app/stores";
   import { invoke } from "@tauri-apps/api/core";
-  import { goto } from "$app/navigation";
   import { marked } from "marked";
+  import { Button } from "$lib/components/ui/button";
+  import { Badge } from "$lib/components/ui/badge";
+  import * as Card from "$lib/components/ui/card";
+  import { Separator } from "$lib/components/ui/separator";
+  import * as Menubar from "$lib/components/ui/menubar";
+  import { ChevronLeft, Settings as SettingsIcon } from "lucide-svelte";
+  import { settingsOpen } from "$lib/stores/settingsStore";
+  import { Skeleton } from "$lib/components/ui/skeleton";
 
   let story: any = null;
   let loading = true;
@@ -11,6 +18,10 @@
   let contentLoading = false;
   let summary: string | null = null;
   let summaryLoading = false;
+
+  function openSettings() {
+    $settingsOpen = true;
+  }
 
   onMount(async () => {
     const id = $page.params.id;
@@ -57,49 +68,100 @@
 </script>
 
 <div class="story-details">
-  <div class="navbar">
-    <button on:click={goBack}>Back to Home</button>
-    <button class="settings-icon" on:click={() => goto("/settings")}>⚙️</button>
-  </div>
+  <Menubar.Root class="navbar">
+    <Button variant="ghost" on:click={goBack} size="icon">
+      <ChevronLeft class="h-4 w-4" />
+      <span class="sr-only">Back to Home</span>
+    </Button>
+    <div class="flex-grow"></div>
+    <Button variant="ghost" on:click={openSettings} size="icon">
+      <SettingsIcon class="h-4 w-4" />
+      <span class="sr-only">Open Settings</span>
+    </Button>
+  </Menubar.Root>
 
   {#if loading}
-    <p>Loading...</p>
+    <Card.Root class="mt-4">
+      <Card.Header>
+        <Skeleton class="h-8 w-3/4" />
+        <Card.Description>
+          <div class="flex space-x-2">
+            <Skeleton class="h-5 w-20" />
+            <Skeleton class="h-5 w-20" />
+            <Skeleton class="h-5 w-24" />
+          </div>
+        </Card.Description>
+      </Card.Header>
+      <Card.Content>
+        <div class="flex space-x-2 mb-4">
+          <Skeleton class="h-10 w-24" />
+          <Skeleton class="h-10 w-32" />
+          <Skeleton class="h-10 w-28" />
+        </div>
+        <Skeleton class="h-4 w-full" />
+        <Skeleton class="h-4 w-full mt-2" />
+        <Skeleton class="h-4 w-3/4 mt-2" />
+      </Card.Content>
+    </Card.Root>
   {:else if story}
-    <h1>{story.title}</h1>
-    <p>By: {story.by}</p>
-    <p>Score: {story.score}</p>
-    {#if story.url}
-      <p>
-        <a href={story.url} target="_blank" rel="noopener noreferrer"
-          >Read more</a
-        >
-      </p>
-      <button on:click={showContent} disabled={contentLoading}>
-        {contentLoading ? "Loading..." : "Show Content"}
-      </button>
-      <button on:click={summarizeContent} disabled={summaryLoading}>
-        {summaryLoading ? "Summarizing..." : "Summarize"}
-      </button>
-    {/if}
-    {#if story.text}
-      <p>{@html story.text}</p>
-    {/if}
+    <Card.Root class="mt-4">
+      <Card.Header>
+        <Card.Title>{story.title}</Card.Title>
+        <Card.Description>
+          <!-- By: {story.by} -->
+          <!-- <Badge variant -->
+          <!-- make the by  story a badge -->
+          <Badge variant="secondary" class="ml-2">By: {story.by}</Badge>
+          <Badge variant="secondary" class="ml-2">By: {story.score}</Badge>
+          <Badge variant="secondary" class="ml-2"
+            >Comments: {story.descendants}</Badge
+          >
+        </Card.Description>
+      </Card.Header>
+      <Card.Content>
+        {#if story.url}
+          <div class="flex space-x-2 mb-4">
+            <Button
+              variant="outline"
+              href={story.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Go to article
+            </Button>
+            <Button
+              variant="outline"
+              on:click={showContent}
+              disabled={contentLoading}
+            >
+              {contentLoading ? "Loading..." : "Scrape Content"}
+            </Button>
+            <Button
+              variant="outline"
+              on:click={summarizeContent}
+              disabled={summaryLoading}
+            >
+              {summaryLoading ? "Summarizing..." : "Summarize"}
+            </Button>
+          </div>
+        {/if}
+        {#if story.text}
+          <p>{@html story.text}</p>
+        {/if}
 
-    <p>Comments: {story.descendants}</p>
+        {#if content}
+          <Separator class="my-4" />
+          <h2 class="text-xl font-semibold mb-2">Article Content:</h2>
+          <div class="markdown-content">{@html marked(content)}</div>
+        {/if}
 
-    {#if content}
-      <div class="content-block">
-        <h2>Article Content:</h2>
-        <div class="markdown-content">{@html marked(content)}</div>
-      </div>
-    {/if}
-
-    {#if summary}
-      <div class="content-block">
-        <h2>Summary:</h2>
-        <div class="markdown-content">{@html marked(summary)}</div>
-      </div>
-    {/if}
+        {#if summary}
+          <Separator class="my-4" />
+          <h2 class="text-xl font-semibold mb-2">Summary:</h2>
+          <div class="markdown-content">{@html marked(summary)}</div>
+        {/if}
+      </Card.Content>
+    </Card.Root>
   {:else}
     <p>Failed to load story.</p>
   {/if}
@@ -110,9 +172,6 @@
     padding: 20px;
     max-width: 800px;
     margin: 0 auto;
-  }
-  button {
-    margin-bottom: 20px;
   }
   .content-block {
     margin-top: 20px;
@@ -158,15 +217,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    /* background-color: #f8f8f8; */
-    border-bottom: 1px solid #ccc;
+    padding: 5px 10px;
+    background-color: #f8f8f8;
+    margin-bottom: 20px;
   }
-
-  .settings-icon {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
+  .flex-grow {
+    flex-grow: 1;
   }
 </style>
