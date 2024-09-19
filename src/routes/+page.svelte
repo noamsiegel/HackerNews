@@ -26,6 +26,7 @@
     } catch (error) {
       console.error("Failed to fetch stories:", error);
     }
+    loading = false;
   });
 
   function openStory(id: number) {
@@ -33,66 +34,68 @@
   }
 </script>
 
-<!-- Navbar -->
-<nav class="navbar">
-  <h1>Hacker News</h1>
-  <button class="settings-icon" on:click={() => goto("/settings")}>⚙️</button>
-</nav>
+<Menubar.Root class="navbar">
+  <h1 class="text-xl font-bold">Hacker News</h1>
+  <div class="flex-grow"></div>
+  <Button variant="ghost" on:click={() => ($settingsOpen = true)} size="icon">
+    <SettingsIcon class="h-4 w-4" />
+    <span class="sr-only">Open Settings</span>
+  </Button>
+</Menubar.Root>
 
 <div class="story-list">
-  {#each stories as story}
-    <div
-      class="story"
-      on:click={() => openStory(story.id)}
-      on:keydown={(e) => e.key === "Enter" && openStory(story.id)}
-      tabindex="0"
-      role="button"
-    >
-      <span class="title">{story.title}</span>
-      <span class="score">{story.score}</span>
-    </div>
-  {/each}
+  {#if loading}
+    {#each Array(10) as _}
+      <Card.Root class="mb-4">
+        <Card.Header>
+          <div class="flex justify-between items-center">
+            <Skeleton class="h-4 w-3/4" />
+            <Skeleton class="h-4 w-16" />
+          </div>
+        </Card.Header>
+      </Card.Root>
+    {/each}
+  {:else}
+    {#each stories as story (story.id)}
+      <Card.Root class="mb-4 cursor-pointer hover:bg-accent transition-colors">
+        <Card.Header>
+          <button
+            class="w-full text-left"
+            on:click={() => openStory(story.id)}
+            on:keydown={(e) => e.key === "Enter" && openStory(story.id)}
+          >
+            <div class="flex justify-between items-center">
+              <Card.Title>{story.title}</Card.Title>
+              <Badge variant="secondary">{story.score}</Badge>
+            </div>
+          </button>
+        </Card.Header>
+      </Card.Root>
+    {/each}
+  {/if}
 </div>
+
+<Sheet.Root bind:open={$settingsOpen}>
+  <Sheet.Content>
+    <Settings />
+  </Sheet.Content>
+</Sheet.Root>
 
 <style>
   .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
+    padding: 5px 10px;
     background-color: #f8f8f8;
-    border-bottom: 1px solid #ccc;
+    margin-bottom: 20px;
   }
-  .settings-icon {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
+  .flex-grow {
+    flex-grow: 1;
   }
   .story-list {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
-  }
-  .story {
-    padding: 10px;
-    margin-bottom: 10px;
-    background-color: #f0f0f0;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .story:hover {
-    background-color: #e0e0e0;
-  }
-  .title {
-    flex-grow: 1;
-    margin-right: 10px;
-  }
-  .score {
-    font-weight: bold;
-    min-width: 30px;
-    text-align: right;
   }
 </style>

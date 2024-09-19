@@ -1,12 +1,8 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
-  import { page } from "$app/stores";
-
-  function goBack() {
-    history.back();
-  }
+  import * as Sheet from "$lib/components/ui/sheet";
+  import * as Select from "$lib/components/ui/select";
 
   let settings = {
     openAiApiKey: "",
@@ -22,10 +18,6 @@
 
   let models: { [key: string]: string } = {};
 
-  let showBanner = false;
-  let bannerMessage = "";
-  let currentPrompt = "";
-
   onMount(async () => {
     const savedSettings = localStorage.getItem("settings");
     if (savedSettings) {
@@ -34,6 +26,7 @@
     settings.selectedPrompt = await fetchCurrentPrompt();
     settings.openAiApiKey = await get_openai_api_key();
     models = await invoke("get_llm_models");
+
     settings.selectedModel = await fetchCurrentModel();
   });
 
@@ -49,16 +42,10 @@
       await invoke("update_selected_model", {
         model: settings.selectedModel,
       });
-      showBanner = true;
-      bannerMessage = `Settings saved`;
     } catch (error) {
-      console.error("Error updating selected prompt:", error);
-      showBanner = true;
-      bannerMessage = "Error saving settings. Please try again.";
+      console.error("Error saving settings:", error);
     }
-    setTimeout(() => {
-      showBanner = false;
-    }, 3000);
+    console.log("Saving settings:", settings);
   }
 
   async function fetchCurrentPrompt() {
@@ -77,29 +64,32 @@
   }
 </script>
 
-<nav class="navbar">
-  <h1>Settings</h1>
-  <button class="back-icon" on:click={goBack}>←</button>
-</nav>
+<Sheet.Header>
+  <Sheet.Title>Settings</Sheet.Title>
+  <Sheet.Description>Adjust your app preferences here.</Sheet.Description>
+</Sheet.Header>
 
-<div class="settings-container">
-  <label>
-    Open AI API Key:
+<div class="grid gap-4 py-4">
+  <div class="grid grid-cols-4 items-center gap-4">
+    <label for="openai-key" class="text-right">OpenAI API Key:</label>
     <input
-      type="text"
+      id="openai-key"
       bind:value={settings.openAiApiKey}
       on:change={saveSettings}
+      class="col-span-3"
+      type="password"
     />
-  </label>
-  <label>
-    Jina AI API Key:
+  </div>
+  <div class="grid grid-cols-4 items-center gap-4">
+    <label for="jina-key" class="text-right">Jina AI API Key:</label>
     <input
-      type="text"
+      id="jina-key"
       bind:value={settings.jinaAiApiKey}
       on:change={saveSettings}
+      class="col-span-3"
+      type="password"
     />
-  </label>
-
+  </div>
   <label>
     Select Prompt:
     <select bind:value={settings.selectedPrompt} on:change={saveSettings}>
@@ -108,7 +98,6 @@
       {/each}
     </select>
   </label>
-
   <label>
     Select Model:
     <select bind:value={settings.selectedModel} on:change={saveSettings}>
@@ -117,47 +106,11 @@
       {/each}
     </select>
   </label>
-
-  {#if showBanner}
-    <div class="banner">{bannerMessage}</div>
-  {/if}
 </div>
 
 <style>
-  .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background-color: #f8f8f8;
-    border-bottom: 1px solid #ccc;
-  }
-  .back-icon {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-  }
-  .settings-container {
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
-  }
   label {
     display: block;
     margin: 10px 0;
-  }
-  select {
-    width: 100%;
-    padding: 5px;
-    margin-top: 5px;
-  }
-  .banner {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: #4caf50;
-    color: white;
-    text-align: center;
-    border-radius: 5px;
   }
 </style>
